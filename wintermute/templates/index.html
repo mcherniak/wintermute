@@ -1,0 +1,19 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% block content %}
+<!-- index.html -->
+    <!DOCTYPE html>
+    <html ng-app="Wintermute">
+    <head>
+    <body ng-controller="mainController">
+        <div id="main">
+        	<div ng-view></div>
+        </div>
+      <script src="/static/bower_components/angular/angular.min.js"></script>
+      <script src="/static/bower_components/angular-route/angular-route.min.js"></script>
+      <script src="/static/js/wintermute.js"></script>
+    </head>
+    </body>
+    </html>
+{% endblock content %}
