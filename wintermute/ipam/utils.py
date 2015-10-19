@@ -1,5 +1,5 @@
-from ipam.keys import ip_network_key
-from ipam.config import IP_NETWORK_DB
+from wintermute.ipam.keys import ip_network_key
+from wintermute.ipam.config import IP_NETWORK_DB
 
 
 def ip_network_exists(ip_network):

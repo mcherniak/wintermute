@@ -1,13 +1,13 @@
 import netaddr
 from datetime import datetime
-from ipam.keys import ip_network_key
-from ipam.errors import IPNetworkNotFound
-from ipam.utils import ip_network_exists
-from ipam.config import IP_NETWORK_DB
+from wintermute.ipam.keys import ip_network_key
+from wintermute.ipam.errors import IPNetworkNotFound
+from wintermute.ipam.utils import ip_network_exists
+from wintermute.ipam.config import IP_NETWORK_DB
 
 
 class IPNetwork(netaddr.IPNetwork):
-    def __init__(self, ip_network, create=False):
+    def __init__(self, ip_network, is_container=False, create=False):
         if not create and not ip_network_exists(ip_network):
             raise IPNetworkNotFound
         self._ip_network = ip_network
@@ -45,3 +45,10 @@ class IPNetwork(netaddr.IPNetwork):
 
     def get(self, key):
         return IP_NETWORK_DB.hget(self.db_key, key)
+
+    @property
+    def aggregates(self):
+        aggregates = netaddr.IPNetwork(self.ip_network)
+        min_score = aggregates[0].value
+        max_score = aggregates[-1].value
+        return IP_NETWORK_DB.zrangebyscore('NETWORKSET', min_score, max_score)

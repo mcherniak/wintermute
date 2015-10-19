@@ -1,1 +1,1 @@
-from ipam.ipnetwork import IPNetwork
+from wintermute.ipam.ipnetwork import IPNetwork
