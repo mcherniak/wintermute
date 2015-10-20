@@ -15,13 +15,21 @@ class IPNetwork(netaddr.IPNetwork):
         self._address, prefixlen = ip_network.split('/')
         self._prefixlen = int(prefixlen)
         if not ip_network_exists(ip_network):
-            self._set('ip_network', ip_network)
+            self._set('is_container', is_container)
             self._set('date_created', datetime.utcnow().isoformat())
             self._update_v4_networkset()
 
     @property
     def ip_network(self):
         return self._ip_network
+
+    @property
+    def is_container(self):
+        return self.get('is_container')
+
+    @is_container.setter
+    def is_container(self, value):
+        self._set('is_container', value)
 
     def _set(self, key, value):
         if value != self.get(key):
@@ -52,3 +60,11 @@ class IPNetwork(netaddr.IPNetwork):
         min_score = aggregates[0].value
         max_score = aggregates[-1].value
         return IP_NETWORK_DB.zrangebyscore('NETWORKSET', min_score, max_score)
+
+    @property
+    def supernets(self):
+        supernets = []
+        for supernet in self.supernet():
+            if ip_network_exists(supernet):
+                supernets.append(supernet)
+        return supernets
