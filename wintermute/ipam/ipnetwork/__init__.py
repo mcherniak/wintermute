@@ -1,7 +1,7 @@
 import netaddr
 from datetime import datetime
 from wintermute.ipam.keys import ip_network_key
-from wintermute.ipam.errors import IPNetworkNotFound
+from wintermute.ipam.errors import IPNetworkNotFound, ContainerMustBeNetwork, NetworkCannotHaveAggregates, ImproperNetwork
 from wintermute.ipam.utils import ip_network_exists
 from wintermute.ipam.config import IP_NETWORK_DB
 
@@ -15,7 +15,15 @@ class IPNetwork(netaddr.IPNetwork):
         self._address, prefixlen = ip_network.split('/')
         self._prefixlen = int(prefixlen)
         if not ip_network_exists(ip_network):
-            self._set('is_container', is_container)
+            if is_container is True:
+                if str(self.network) != str(self._address):
+                    raise ContainerMustBeNetwork
+            elif is_container is False:
+                if self.aggregates:
+                    raise NetworkCannotHaveAggregates
+                if self[0].value + 1 <= self.value <= self[-1].value:
+                    raise ImproperNetwork
+            self._set('is_container', str(is_container))
             self._set('date_created', datetime.utcnow().isoformat())
             self._update_v4_networkset()
 
@@ -57,7 +65,7 @@ class IPNetwork(netaddr.IPNetwork):
     @property
     def aggregates(self):
         aggregates = netaddr.IPNetwork(self.ip_network)
-        min_score = aggregates[0].value
+        min_score = aggregates[0].value + 1
         max_score = aggregates[-1].value
         return IP_NETWORK_DB.zrangebyscore('NETWORKSET', min_score, max_score)
 
