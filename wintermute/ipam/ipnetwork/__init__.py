@@ -65,6 +65,25 @@ class IPNetwork(netaddr.IPNetwork):
             return True
 
     @property
+    def delete(self):
+        for agg in self.aggregates:
+            IP_NETWORK_DB.zincrby('DEPTH', agg, -1)
+        self._update_v4_networkset(delete=True)
+        for key in self.keys:
+            self._delete_key(key)
+
+    @property
+    def keys(self):
+        return IP_NETWORK_DB.hkeys(self.db_key)
+
+    def _delete_key(self, key):
+        success = IP_NETWORK_DB.hdel(self.db_key, key)
+        if success:
+            return True
+        else:
+            return False
+
+    @property
     def db_key(self):
         return ip_network_key(self.ip_network)
 
