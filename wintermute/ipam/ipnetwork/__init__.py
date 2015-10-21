@@ -26,6 +26,7 @@ class IPNetwork(netaddr.IPNetwork):
             self._set('is_container', str(is_container))
             self._set('date_created', datetime.utcnow().isoformat())
             self._update_v4_networkset()
+            self._update_depth()
 
     @property
     def ip_network(self):
@@ -45,6 +46,14 @@ class IPNetwork(netaddr.IPNetwork):
             IP_NETWORK_DB.hset(self.db_key, 'last_updated',
                                datetime.utcnow().isoformat())
         return True
+
+    def _update_depth(self):
+        if len(self.supernets) == 0:
+            for network in self.aggregates:
+                IP_NETWORK_DB.zincrby('DEPTH', network, 1)
+        else:
+            score = len(self.supernets)
+            IP_NETWORK_DB.zadd('DEPTH', self.db_key, score)
 
     def _update_v4_networkset(self, delete=False):
         score = float('{}.{}'.format(self.value, self._prefixlen))
