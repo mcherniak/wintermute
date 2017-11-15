@@ -5,6 +5,8 @@ from wintermute.ipam.errors import IPNetworkNotFound, ContainerMustBeNetwork, Ne
 from wintermute.ipam.utils import ip_network_exists
 from wintermute.ipam.config import IP_NETWORK_DB
 
+####### IF NETWORK IS EXACT ON MASK BOUNDARY - YOU CAN CREATE IT EVEN THOUGH IT SHOUKD BE A CONTAINER
+####### example you can create 192.168.0.0/24 and it will not update the depth index
 
 class IPNetwork(netaddr.IPNetwork):
     def __init__(self, ip_network, is_container=False, create=False):
@@ -20,7 +22,8 @@ class IPNetwork(netaddr.IPNetwork):
                     raise ContainerMustBeNetwork
             elif is_container is False:
                 if self.aggregates:
-                    raise NetworkCannotHaveAggregates
+                    raise 
+                    HaveAggregates
                 if self[0].value + 1 <= self.value <= self[-1].value:
                     raise ImproperNetwork
             self._set('is_container', str(is_container))
@@ -51,6 +54,7 @@ class IPNetwork(netaddr.IPNetwork):
         if len(self.supernets) == 0:
             for network in self.aggregates:
                 IP_NETWORK_DB.zincrby('DEPTH', network, 1)
+            IP_NETWORK_DB.zadd('DEPTH', self.db_key, 0)
         else:
             score = len(self.supernets)
             IP_NETWORK_DB.zadd('DEPTH', self.db_key, score)
@@ -93,6 +97,7 @@ class IPNetwork(netaddr.IPNetwork):
     @property
     def aggregates(self):
         aggregates = netaddr.IPNetwork(self.ip_network)
+        #Cant find itself if its a /23 and theres a /24 for example - i think this is why depth was not incremented on a /24 that was part of the same /23
         min_score = aggregates[0].value + 1
         max_score = aggregates[-1].value
         return IP_NETWORK_DB.zrangebyscore('NETWORKSET', min_score, max_score)
